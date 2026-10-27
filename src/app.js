@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
+const path = require("path");
 const router = require("./routes.js");
 const { UPLOAD_ROOT } = require("./common/middlewares/upload.js");
 const { notFound, errorHandler } = require("./common/errors/errorHandler.js");
@@ -12,6 +13,7 @@ app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(UPLOAD_ROOT));
+app.use(express.static(path.join(__dirname, "../public")));
 
 app.use("/api", router);
 

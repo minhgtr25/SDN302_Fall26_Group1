@@ -26,10 +26,43 @@ const login = async ({ email, password }) => {
   // ghi cả id và sub để dùng được với middleware auth của các nhánh khác
   const token = jwt.sign(
     { id: user._id, sub: user._id, role: user.role },
-    process.env.JWT_SECRET,
+    process.env.JWT_SECRET || "fruit-fresh-course-secret",
     { expiresIn: "1d" },
   );
   return { token, user: publicUser(user) };
 };
 
-module.exports = { login };
+// Đăng ký tài khoản Customer
+const register = async ({ fullName, email, password, phone }) => {
+  if (!fullName || !email || !password) {
+    throw new AppError(400, "Vui lòng nhập họ tên, email và mật khẩu");
+  }
+  if (password.length < 6) {
+    throw new AppError(400, "Mật khẩu tối thiểu 6 ký tự");
+  }
+
+  const existing = await User.findOne({ email: email.toLowerCase() });
+  if (existing) {
+    throw new AppError(400, "Email đã được sử dụng");
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = new User({
+    fullName: fullName.trim(),
+    email: email.trim().toLowerCase(),
+    password: hashedPassword,
+    phone: phone ? phone.trim() : undefined,
+    role: "CUSTOMER",
+    accountStatus: "ACTIVE",
+  });
+  await user.save();
+
+  const token = jwt.sign(
+    { id: user._id, sub: user._id, role: user.role },
+    process.env.JWT_SECRET || "fruit-fresh-course-secret",
+    { expiresIn: "1d" },
+  );
+  return { token, user: publicUser(user) };
+};
+
+module.exports = { login, register, publicUser };
